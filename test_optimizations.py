@@ -97,7 +97,7 @@ class TestFilterAndCount:
         count2 = optimized_processor.filter_and_count(items, threshold)
         
         assert count1 == count2
-        assert count1 == 49  # 51-99 inclusive
+        assert count1 == 49  # 51-99 inclusive (49 values)
     
     def test_no_items_above_threshold(self, inefficient_processor, optimized_processor):
         items = [{'value': i} for i in range(10)]

@@ -6,7 +6,7 @@ This document outlines the performance inefficiencies identified in the codebase
 
 | Issue | Inefficient Approach | Optimized Approach | Performance Gain |
 |-------|---------------------|-------------------|------------------|
-| 1. Duplicate Detection | O(n²) list lookup | O(n) set lookup | ~100x faster for 1000 items |
+| 1. Duplicate Detection | O(n²) list lookup | O(n) set lookup | ~38x faster for 1000 items |
 | 2. String Building | Repeated concatenation | List + join | ~50x faster for 1000 strings |
 | 3. File Reading | Load entire file | Line-by-line iteration | Memory: O(1) vs O(n) |
 | 4. Filtering & Counting | List comprehension | Generator expression | 50% less memory |
@@ -15,7 +15,7 @@ This document outlines the performance inefficiencies identified in the codebase
 | 7. Large Dataset | Intermediate lists | Generator pipeline | 50-70% less memory |
 | 8. Database Inserts | Individual commits | Batch operations | 10-100x faster |
 | 9. Data Copying | Deep copy | Shallow copy/dict merge | 5-10x faster |
-| 10. Finding Commons | Nested loops O(n×m) | Set intersection O(n+m) | 100-1000x faster |
+| 10. Finding Commons | Nested loops O(n×m) | Set intersection O(n+m) avg | ~87x faster for 500 items |
 
 ## Detailed Analysis
 
@@ -37,7 +37,7 @@ if item_id in seen:  # O(1) lookup
 seen.add(item_id)
 ```
 
-**Explanation:** Lists require linear search (O(n)) for membership testing, while sets use hash tables for constant-time (O(1)) lookup. For n items, this reduces complexity from O(n²) to O(n).
+**Explanation:** Lists require linear search (O(n)) for membership testing, while sets use hash tables for constant-time (O(1)) average-case lookup. For checking n items, this reduces complexity from O(n²) to O(n). The actual speedup depends on implementation details and data patterns, with our benchmark showing ~38x improvement for 1000 items.
 
 ---
 
@@ -159,10 +159,11 @@ return sum(filtered)
 
 **Solution:**
 ```python
-return sum(x ** 2 for x in data if (x ** 2) % 2 == 0)  # No intermediate lists
+# Using walrus operator to avoid computing square twice
+return sum(sq for x in data if (sq := x ** 2) % 2 == 0)  # No intermediate lists
 ```
 
-**Explanation:** Generator expressions process items one at a time without creating intermediate lists, significantly reducing memory usage for large datasets.
+**Explanation:** Generator expressions process items one at a time without creating intermediate lists, significantly reducing memory usage for large datasets. The walrus operator (`:=`) assigns and returns the value in one step, avoiding redundant computation of `x ** 2`.
 
 ---
 
@@ -220,7 +221,7 @@ for item1 in list1:              # O(n * m) complexity
 return list(set(list1) & set(list2))  # O(n + m) complexity
 ```
 
-**Explanation:** Nested loops have O(n×m) complexity. Set intersection is O(n+m), providing dramatic speedup for large lists (e.g., 100x faster for two 1000-element lists).
+**Explanation:** Nested loops have O(n×m) complexity - for each element in list1, we check every element in list2. Set intersection converts both lists to sets (O(n+m) with hash operations) then performs intersection using hash lookups (O(min(n,m)) average case), resulting in overall O(n+m) average-case complexity. This provides dramatic speedup for large lists, with our benchmark showing ~87x improvement for 500-element lists.
 
 ---
 

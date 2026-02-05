@@ -87,7 +87,8 @@ class OptimizedDataProcessor:
     def process_large_dataset(self, data):
         """Process large dataset efficiently with generators."""
         # Generator expressions - no intermediate lists
-        return sum(x ** 2 for x in data if (x ** 2) % 2 == 0)
+        # Compute square once to avoid redundant computation
+        return sum(sq for x in data if (sq := x ** 2) % 2 == 0)
     
     # OPTIMIZATION 8: Use batch operations for database
     def save_many_records(self, db_connection, records):
